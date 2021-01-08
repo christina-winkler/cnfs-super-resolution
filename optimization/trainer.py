@@ -5,27 +5,38 @@ import matplotlib.pyplot as plt
 # Utils
 import utils
 import numpy as np
-from  tensorboardX import SummaryWriter
+from tensorboardX import SummaryWriter
 from torch.optim.lr_scheduler import StepLR
 
 # Evaluation
 from evaluate import evaluate, metrics_eval
 import test
 
-def trainer(args, train_loader, valid_loader, test_loader, model, optimizer,        device, needs_init=True):
 
-    writer = SummaryWriter('runs/{}'.format(args.exp_name))
+def trainer(
+    args,
+    train_loader,
+    valid_loader,
+    test_loader,
+    model,
+    optimizer,
+    device,
+    needs_init=True,
+):
+
+    writer = SummaryWriter("runs/{}".format(args.exp_name))
     prev_bpd_epoch = np.inf
     logging_step = 0
     step = 0
     bpd_valid = 0
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                step_size=2 * 10**5, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=2 * 10 ** 5, gamma=0.5
+    )
 
     for epoch in range(args.epochs):
         for batch_idx, item in enumerate(train_loader):
 
-            #for param_group in optimizer.param_groups:
+            # for param_group in optimizer.param_groups:
             #    print(param_group['lr'])
 
             y = item[0]
@@ -55,13 +66,14 @@ def trainer(args, train_loader, valid_loader, test_loader, model, optimizer,    
             if needs_init and torch.cuda.device_count() > 1:
                 bsz_p_gpu = args.bsz // torch.cuda.device_count()
                 _, _ = model.module.forward(
-                    x_hr=y[:bsz_p_gpu], xlr=x[:bsz_p_gpu], logdet=0)
+                    x_hr=y[:bsz_p_gpu], xlr=x[:bsz_p_gpu], logdet=0
+                )
 
             # Forward pass
             z, bpd = model.forward(x_hr=y, xlr=x, logdet=0)
             loss = bpd
 
-            writer.add_scalar('bpd_train', bpd.mean().item(), step)
+            writer.add_scalar("bpd_train", bpd.mean().item(), step)
 
             # Compute gradients
             loss.mean().backward()
@@ -71,39 +83,51 @@ def trainer(args, train_loader, valid_loader, test_loader, model, optimizer,    
             scheduler.step()
             step += 1
 
-            print("[{}] Train Step: {:01d}/{}, Bsz = {}, Bits per dim {:.3f}".format(
-                datetime.now().strftime("%Y-%m-%d %H:%M"), 
-                step, args.max_steps,
-                args.bsz,
-                bpd.mean()))
+            print(
+                "[{}] Train Step: {:01d}/{}, Bsz = {}, Bits per dim {:.3f}".format(
+                    datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    step,
+                    args.max_steps,
+                    args.bsz,
+                    bpd.mean(),
+                )
+            )
 
             if step % args.log_interval == 0:
                 with torch.no_grad():
-                    if hasattr(model, 'module'):
+                    if hasattr(model, "module"):
                         model_without_dataparallel = model.module
                     else:
                         model_without_dataparallel = model
 
-                    #test.test_model(model_without_dataparallel,
+                    # test.test_model(model_without_dataparallel,
                     #               test_loader, args)
-                    #writer = metrics_eval(
+                    # writer = metrics_eval(
                     #     model_without_dataparallel,
                     #     test_loader,
                     #     logging_step, writer, args)
 
-                    bpd_valid = evaluate(model_without_dataparallel,
-                                        valid_loader, args.exp_name,
-                                        '{}'.format(step), args)
+                    bpd_valid = evaluate(
+                        model_without_dataparallel,
+                        valid_loader,
+                        args.exp_name,
+                        "{}".format(step),
+                        args,
+                    )
 
                     writer.add_scalar(
-                       'bpd_valid', bpd_valid.mean().item(), 
-                       logging_step)
+                        "bpd_valid", bpd_valid.mean().item(), logging_step
+                    )
 
                     # Save checkpoint only when bpd lower than previous model
                     if bpd_valid < prev_bpd_epoch:
                         utils.save_model(
-                            model_without_dataparallel, epoch, optimizer, args,
-                            time=True)
+                            model_without_dataparallel,
+                            epoch,
+                            optimizer,
+                            args,
+                            time=True,
+                        )
                         prev_bpd_epoch = bpd_valid
 
                     logging_step += 1
@@ -112,15 +136,17 @@ def trainer(args, train_loader, valid_loader, test_loader, model, optimizer,    
                 break
 
         if step == args.max_steps:
-            print("Done Training for {} mini-batch update steps!".format(
-                    args.  max_steps))
+            print(
+                "Done Training for {} mini-batch update steps!".format(args.max_steps)
+            )
 
-            if hasattr(model, 'module'):
-                    model_without_dataparallel = model.module
+            if hasattr(model, "module"):
+                model_without_dataparallel = model.module
             else:
-                    model_without_dataparallel = model
+                model_without_dataparallel = model
 
-            utils.save_model(model_without_dataparallel, epoch, 
-                             optimizer, args, time=True)
-            print('Saved trained model :)')
+            utils.save_model(
+                model_without_dataparallel, epoch, optimizer, args, time=True
+            )
+            print("Saved trained model :)")
             break

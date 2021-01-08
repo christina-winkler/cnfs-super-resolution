@@ -3,12 +3,15 @@ from distributions import DiscLogistic
 from condNF import LrNet
 import torch.nn as nn
 
+
 class DLogistic_NN(nn.Module):
     """
     NN Module to estimate parmaters of DLogistic.
     """
-    def __init__(self, cond_channels, y_shape, s, L, K, bsz, nb, nbits,
-                 filter_size=512):
+
+    def __init__(
+        self, cond_channels, y_shape, s, L, K, bsz, nb, nbits, filter_size=512
+    ):
 
         super(DLogistic_NN, self).__init__()
 
@@ -17,12 +20,17 @@ class DLogistic_NN(nn.Module):
         self.C = C
         self.W = W
         self.bsz = bsz
-        self.nbins = 2**nbits
+        self.nbins = 2 ** nbits
 
         # RRDB Net to estimate params of DLogistic
-        self.rrdb1 = LrNet(in_c=3, cond_channels=cond_channels, s=s,
-                           input_shape=(C, W // s, H // s),
-                           nb=nb, gc=55)
+        self.rrdb1 = LrNet(
+            in_c=3,
+            cond_channels=cond_channels,
+            s=s,
+            input_shape=(C, W // s, H // s),
+            nb=nb,
+            gc=55,
+        )
 
         self.pred_mean = nn.Conv2d(cond_channels, C, 3, padding=1)
         self.pred_h_sigma = nn.Conv2d(cond_channels, C, 3, padding=1)

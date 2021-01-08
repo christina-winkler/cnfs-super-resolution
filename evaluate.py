@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 import random
-#import cv2
+
+# import cv2
 import PIL
 
 from torchvision import transforms
@@ -35,15 +36,15 @@ def evaluate(model, data_loader, exp_name, logstep, args):
             x = item[1]
 
             # Push tensors to GPU
-            y = y.to('cuda')
-            x = x.to('cuda')
+            y = y.to("cuda")
+            x = x.to("cuda")
 
-            if args.modeltype == 'dlogistic':
+            if args.modeltype == "dlogistic":
                 logp_mass, means, logsigmas = model.forward(y, x)
                 ndims = np.prod(y.size()[1:])
-                bpd = - logp_mass / (np.log(2) * ndims)
+                bpd = -logp_mass / (np.log(2) * ndims)
 
-            elif args.modeltype == 'flow':
+            elif args.modeltype == "flow":
                 # Push xhr through Flow:
                 z, bpd = model.forward(x_hr=y, xlr=x, logdet=0)
 
@@ -55,61 +56,97 @@ def evaluate(model, data_loader, exp_name, logstep, args):
                 break
 
         # ---------------------- Sample from model ----------------------
-        if args.modeltype == 'flow':
+        if args.modeltype == "flow":
             mu0 = model._sample(x=x, eps=0)
             mu05 = model._sample(x=x, eps=0.5)
             mu08 = model._sample(x=x, eps=0.8)
             mu1 = model._sample(x=x, eps=1)
-            savedir = 'runs/{}/snapshots/sampled_images/{}/'.format(
-                args.exp_name, args.trainset)
+            savedir = "runs/{}/snapshots/sampled_images/{}/".format(
+                args.exp_name, args.trainset
+            )
             os.makedirs(savedir, exist_ok=True)
 
-            x = x.clamp(min=0, max=float(2**args.nbits - 1) /
-                        float(2**args.nbits))
+            x = x.clamp(min=0, max=float(2 ** args.nbits - 1) / float(2 ** args.nbits))
 
-            y = y.clamp(min=0, max=float(2**args.nbits - 1) /
-                        float(2**args.nbits))
+            y = y.clamp(min=0, max=float(2 ** args.nbits - 1) / float(2 ** args.nbits))
 
             torchvision.utils.save_image(
-                x[:64], savedir + '{}_x.png'.format(logstep),
-                nrow=8, padding=2, normalize=False)
+                x[:64],
+                savedir + "{}_x.png".format(logstep),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                y[:64], savedir + '{}_y.png'.format(logstep),
-                nrow=8, padding=2, normalize=False)
+                y[:64],
+                savedir + "{}_y.png".format(logstep),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                mu0[:64], savedir + '{}_mu_eps{}.png'.format(logstep, 0),
-                nrow=8, padding=2, normalize=False)
+                mu0[:64],
+                savedir + "{}_mu_eps{}.png".format(logstep, 0),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                mu05[:64], savedir + '{}_mu_eps{}.png'.format(logstep,
-                                                              0.5),
-                nrow=8, padding=2, normalize=False)
+                mu05[:64],
+                savedir + "{}_mu_eps{}.png".format(logstep, 0.5),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                mu08[:64], savedir + '{}_mu_eps{}.png'.format(logstep,
-                                                              0.8),
-                nrow=8, padding=2, normalize=False)
+                mu08[:64],
+                savedir + "{}_mu_eps{}.png".format(logstep, 0.8),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                mu1[:64], savedir + '{}_mu_eps{}.png'.format(logstep, 1),
-                nrow=8, padding=2, normalize=False)
+                mu1[:64],
+                savedir + "{}_mu_eps{}.png".format(logstep, 1),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
 
-        elif args.modeltype == 'dlogistic':
-            savedir = 'runs/{}/snapshots/sampled_images/{}/'.format(args.exp_name, args.testset)
+        elif args.modeltype == "dlogistic":
+            savedir = "runs/{}/snapshots/sampled_images/{}/".format(
+                args.exp_name, args.testset
+            )
             os.makedirs(savedir, exist_ok=True)
             torchvision.utils.save_image(
-                x[:64], savedir + '{}_x.png'.format(logstep),
-                nrow=8, padding=2, normalize=False)
+                x[:64],
+                savedir + "{}_x.png".format(logstep),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                y[:64], savedir + '{}_y.png'.format(logstep),
-                nrow=8, padding=2, normalize=False)
+                y[:64],
+                savedir + "{}_y.png".format(logstep),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
             torchvision.utils.save_image(
-                means[:64], savedir + '{}_mu.png'.format(logstep),
-                nrow=8, padding=2, normalize=False)
+                means[:64],
+                savedir + "{}_mu.png".format(logstep),
+                nrow=8,
+                padding=2,
+                normalize=False,
+            )
 
-    print('Eval bpd mean:', np.mean(bpd_list))
+    print("Eval bpd mean:", np.mean(bpd_list))
     return np.mean(bpd_list)
+
 
 def metrics_eval(model, test_loader, logging_step, writer, args):
 
-    print('Metric evaluation on {}...'.format(args.testset))
+    print("Metric evaluation on {}...".format(args.testset))
 
     # storing metrics
     # ssim_yhat = []
@@ -133,10 +170,10 @@ def metrics_eval(model, test_loader, logging_step, writer, args):
             w, h = orig_shape
 
             # Push tensors to GPU
-            y = y.to('cuda')
-            x = x.to('cuda')
+            y = y.to("cuda")
+            x = x.to("cuda")
 
-            if args.modeltype == 'flow':
+            if args.modeltype == "flow":
                 mu0 = model._sample(x=x, eps=0)
                 mu05 = model._sample(x=x, eps=0.5)
                 mu08 = model._sample(x=x, eps=0.8)
@@ -152,7 +189,7 @@ def metrics_eval(model, test_loader, logging_step, writer, args):
                 psnr_08.append(metrics.psnr(y, mu08, orig_shape))
                 psnr_1.append(metrics.psnr(y, mu1, orig_shape))
 
-            elif args.modeltype == 'dlogistic':
+            elif args.modeltype == "dlogistic":
                 # sample from model
                 sample, means = model._sample(x=x)
                 ssim_mu0.append(metrics.ssim(y, means, orig_shape))
@@ -162,30 +199,38 @@ def metrics_eval(model, test_loader, logging_step, writer, args):
                 if args.visual:
                     # only for testing, delete snippet later
                     torchvision.utils.save_image(
-                        x[:, :, :h, :w], 'x.png',
-                        nrow=1, padding=2, normalize=False)
+                        x[:, :, :h, :w], "x.png", nrow=1, padding=2, normalize=False
+                    )
                     torchvision.utils.save_image(
-                        y[:, :, :h, :w], 'y.png',
-                        nrow=1, padding=2, normalize=False)
+                        y[:, :, :h, :w], "y.png", nrow=1, padding=2, normalize=False
+                    )
                     torchvision.utils.save_image(
-                        means[:, :, :h, :w], 'dlog_mu.png',
-                        nrow=1, padding=2, normalize=False)
+                        means[:, :, :h, :w],
+                        "dlog_mu.png",
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        sample[:, :, :h, :w], 'dlog_sample.png',
-                        nrow=1, padding=2, normalize=False)
+                        sample[:, :, :h, :w],
+                        "dlog_sample.png",
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
 
-        writer.add_scalar('ssim_std0', np.mean(ssim_mu0), logging_step)
-        writer.add_scalar('psnr0', np.mean(psnr_0), logging_step)
+        writer.add_scalar("ssim_std0", np.mean(ssim_mu0), logging_step)
+        writer.add_scalar("psnr0", np.mean(psnr_0), logging_step)
 
-        if args.modeltype == 'flow':
-            writer.add_scalar('ssim_std05', np.mean(ssim_mu05), logging_step)
-            writer.add_scalar('ssim_std08', np.mean(ssim_mu08), logging_step)
-            writer.add_scalar('ssim_std1', np.mean(ssim_mu1), logging_step)
-            writer.add_scalar('psnr05', np.mean(psnr_05), logging_step)
-            writer.add_scalar('psnr08', np.mean(psnr_08), logging_step)
-            writer.add_scalar('psnr1', np.mean(psnr_1), logging_step)
+        if args.modeltype == "flow":
+            writer.add_scalar("ssim_std05", np.mean(ssim_mu05), logging_step)
+            writer.add_scalar("ssim_std08", np.mean(ssim_mu08), logging_step)
+            writer.add_scalar("ssim_std1", np.mean(ssim_mu1), logging_step)
+            writer.add_scalar("psnr05", np.mean(psnr_05), logging_step)
+            writer.add_scalar("psnr08", np.mean(psnr_08), logging_step)
+            writer.add_scalar("psnr1", np.mean(psnr_1), logging_step)
 
-        print('PSNR (GT,mean):', np.mean(psnr_0))
-        print('SSIM (GT,mean):', np.mean(ssim_mu0))
+        print("PSNR (GT,mean):", np.mean(psnr_0))
+        print("SSIM (GT,mean):", np.mean(ssim_mu0))
 
         return writer

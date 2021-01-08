@@ -5,22 +5,23 @@ import torch
 import utils
 import random
 
+
 class ActNorm(nn.Module):
     """
-        Activation Normalization layer which normalizes the activation values of a batch
-        by their mean and variance. The activations of each channel then should have
-        zero mean and unit variance. This layer ensure more stable parameter updates during
-        training as it reduces the variance over the samples in a mini batch.
-        from: https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
-        """
+    Activation Normalization layer which normalizes the activation values of a batch
+    by their mean and variance. The activations of each channel then should have
+    zero mean and unit variance. This layer ensure more stable parameter updates during
+    training as it reduces the variance over the samples in a mini batch.
+    from: https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
+    """
 
-    def __init__(self, num_features, logscale_factor=1., scale=1.):
+    def __init__(self, num_features, logscale_factor=1.0, scale=1.0):
         super(ActNorm, self).__init__()
         self.initialized = False
         self.logscale_factor = logscale_factor
         self.scale = scale
-        self.register_parameter('b', nn.Parameter(torch.zeros(1, num_features, 1)))
-        self.register_parameter('logs', nn.Parameter(torch.zeros(1, num_features, 1)))
+        self.register_parameter("b", nn.Parameter(torch.zeros(1, num_features, 1)))
+        self.register_parameter("logs", nn.Parameter(torch.zeros(1, num_features, 1)))
 
     def forward(self, input, logdet, reverse=False):
 
@@ -36,8 +37,13 @@ class ActNorm(nn.Module):
                 # Compute the mean and variance
                 sum_size = input.size(0) * input.size(-1)
                 b = -torch.sum(input, dim=(0, -1)) / sum_size
-                vars = unsqueeze(torch.sum((input + unsqueeze(b)) ** 2, dim=(0, -1)) / sum_size)
-                logs = torch.log(self.scale / (torch.sqrt(vars) + 1e-6)) / self.logscale_factor
+                vars = unsqueeze(
+                    torch.sum((input + unsqueeze(b)) ** 2, dim=(0, -1)) / sum_size
+                )
+                logs = (
+                    torch.log(self.scale / (torch.sqrt(vars) + 1e-6))
+                    / self.logscale_factor
+                )
 
                 self.b.data.copy_(unsqueeze(b).data)
                 self.logs.data.copy_(logs.data)
@@ -60,6 +66,7 @@ class ActNorm(nn.Module):
 
             return output.view(input_shape), logdet - dlogdet
 
+
 class Invert1x1Conv(nn.Conv2d):
     # from https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
     def __init__(self, num_channels):
@@ -69,30 +76,53 @@ class Invert1x1Conv(nn.Conv2d):
     def reset_parameters(self):
         # initialization done with rotation matrix
         w_init = np.linalg.qr(np.random.randn(self.num_channels, self.num_channels))[0]
-        w_init = torch.from_numpy(w_init.astype('float32'))
+        w_init = torch.from_numpy(w_init.astype("float32"))
         w_init = w_init.unsqueeze(-1).unsqueeze(-1)
         self.weight.data.copy_(w_init)
 
-    def forward_(self, x, logdet, reverse = False):
+    def forward_(self, x, logdet, reverse=False):
 
         if not reverse:
-            dlogdet = torch.det(self.weight.squeeze()).abs().log() * x.size(-2) * x.size(-1)
+            dlogdet = (
+                torch.det(self.weight.squeeze()).abs().log() * x.size(-2) * x.size(-1)
+            )
             logdet += dlogdet
-            output = F.conv2d(x, self.weight, self.bias, self.stride, self.padding, \
-                              self.dilation, self.groups)
+            output = F.conv2d(
+                x,
+                self.weight,
+                self.bias,
+                self.stride,
+                self.padding,
+                self.dilation,
+                self.groups,
+            )
         else:
-            dlogdet = torch.det(self.weight.squeeze()).abs().log() * x.size(-2) * x.size(-1)
+            dlogdet = (
+                torch.det(self.weight.squeeze()).abs().log() * x.size(-2) * x.size(-1)
+            )
             logdet -= dlogdet
-            weight_inv = torch.inverse(self.weight.squeeze()).unsqueeze(-1).unsqueeze(-1)
-            output = F.conv2d(x, weight_inv, self.bias, self.stride, self.padding, \
-                              self.dilation, self.groups)
+            weight_inv = (
+                torch.inverse(self.weight.squeeze()).unsqueeze(-1).unsqueeze(-1)
+            )
+            output = F.conv2d(
+                x,
+                weight_inv,
+                self.bias,
+                self.stride,
+                self.padding,
+                self.dilation,
+                self.groups,
+            )
         return output, logdet
+
 
 class Squeeze(nn.Module):
     # taken from: https://github.com/pclucas14/pytorch-glow
     def __init__(self, factor=2):
         super(Squeeze, self).__init__()
-        assert factor > 1 and isinstance(factor, int), 'no point of using this if factor <= 1'
+        assert factor > 1 and isinstance(
+            factor, int
+        ), "no point of using this if factor <= 1"
         self.factor = factor
 
     def squeeze_bchw(self, x):
@@ -102,7 +132,9 @@ class Squeeze(nn.Module):
         # taken from https://github.com/chaiyujin/glow-pytorch/blob/master/glow/modules.py
         x = x.view(bs, c, h // self.factor, self.factor, w // self.factor, self.factor)
         x = x.permute(0, 1, 3, 5, 2, 4).contiguous()
-        x = x.view(bs, c * self.factor * self.factor, h // self.factor, w // self.factor)
+        x = x.view(
+            bs, c * self.factor * self.factor, h // self.factor, w // self.factor
+        )
 
         return x
 
@@ -124,8 +156,8 @@ class Squeeze(nn.Module):
         else:
             return self.unsqueeze_bchw(x)
 
-class AffineCoupling(nn.Module):
 
+class AffineCoupling(nn.Module):
     def __init__(self, in_channels, filter_size=512):
         super().__init__()
 
@@ -134,7 +166,7 @@ class AffineCoupling(nn.Module):
             nn.ReLU(),
             conv2d_actnorm(filter_size, filter_size, filter_size=1, padding=0),
             nn.ReLU(),
-            conv2d_zeros(filter_size, in_channels,filter_size=3, padding=1)
+            conv2d_zeros(filter_size, in_channels, filter_size=3, padding=1),
         )
 
         self.Net[0].bias.data.zero_()
@@ -165,14 +197,21 @@ class AffineCoupling(nn.Module):
             logdet += utils.flatten_sum(logscale)
             return x, logdet
 
+
 class conv2d_actnorm(nn.Conv2d):
-    def __init__(self, channels_in, channels_out, filter_size, stride=1,
-                 padding=None):
-        super().__init__(channels_in, channels_out, filter_size, stride=stride,
-                         padding=padding)
+    def __init__(self, channels_in, channels_out, filter_size, stride=1, padding=None):
+        super().__init__(
+            channels_in, channels_out, filter_size, stride=stride, padding=padding
+        )
         padding = (filter_size - 1) // 2 or padding
-        self.conv = nn.Conv2d(channels_in, channels_out, filter_size,
-                              stride=stride, padding=padding, bias=False)
+        self.conv = nn.Conv2d(
+            channels_in,
+            channels_out,
+            filter_size,
+            stride=stride,
+            padding=padding,
+            bias=False,
+        )
         self.actnorm = ActNorm(channels_out)
 
     def forward(self, x):
@@ -180,10 +219,20 @@ class conv2d_actnorm(nn.Conv2d):
         x = self.actnorm.forward(x, -1)[0]
         return x
 
+
 class conv2d_zeros(nn.Conv2d):
-    def __init__(self, channels_in, channels_out, filter_size=3, stride=1, 
-                 padding=0, logscale=3.):
-        super().__init__(channels_in, channels_out, filter_size, stride=stride,             padding=padding)
+    def __init__(
+        self,
+        channels_in,
+        channels_out,
+        filter_size=3,
+        stride=1,
+        padding=0,
+        logscale=3.0,
+    ):
+        super().__init__(
+            channels_in, channels_out, filter_size, stride=stride, padding=padding
+        )
         self.register_parameter("logs", nn.Parameter(torch.zeros(channels_out, 1, 1)))
         self.logscale_factor = logscale
 
@@ -195,6 +244,7 @@ class conv2d_zeros(nn.Conv2d):
         out = super().forward(input)
         return out * torch.exp(self.logs * self.logscale_factor)
 
+
 class Split(nn.Module):
     # from https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
     def __init__(self, C):
@@ -203,14 +253,14 @@ class Split(nn.Module):
 
     def split2d_prior(self, x):
         h = self.conv_zero(x)
-        mean, logsd = h[:,0::2], h[:,1::2]
+        mean, logsd = h[:, 0::2], h[:, 1::2]
         return Gaussian_Diag(mean, logsd)
 
     def forward(self, x, logdet, logpz, eps, reverse=False, use_stored=False):
 
         if not reverse:
             z1, y = torch.chunk(x, 2, 1)
-            self.y = y.detach() # keep track of latent variables
+            self.y = y.detach()  # keep track of latent variables
             pz = self.split2d_prior(z1)
             logpz += pz.logp(y)
             return z1, logdet, logpz
@@ -218,9 +268,10 @@ class Split(nn.Module):
         else:
             pz = self.split2d_prior(x)
             z2 = self.y if use_stored else pz.sample(eps)
-            z = torch.cat((x,z2),1)
-            logpz -=  pz.logp(z2)
+            z = torch.cat((x, z2), 1)
+            logpz -= pz.logp(z2)
             return z, logdet, logpz
+
 
 class GaussianPrior(nn.Module):
     # https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
@@ -230,8 +281,7 @@ class GaussianPrior(nn.Module):
 
     def forward(self, x, logdet, logpz, eps, reverse=False):
         if not reverse:
-            mean_and_logsd = torch.cat([torch.zeros_like(x) for _ in range(2)],
-                                        dim=1)
+            mean_and_logsd = torch.cat([torch.zeros_like(x) for _ in range(2)], dim=1)
             mean, logsd = torch.chunk(mean_and_logsd, 2, dim=1)
             pz = Gaussian_Diag(mean, logsd)
             logpz += pz.logp(x)
@@ -239,29 +289,32 @@ class GaussianPrior(nn.Module):
         else:
             bsz, c, h, w = self.input_shape
 
-            mean_and_logsd = torch.cuda.FloatTensor(bsz, 2 * c, h, w).fill_(0.)
+            mean_and_logsd = torch.cuda.FloatTensor(bsz, 2 * c, h, w).fill_(0.0)
             mean, logsd = torch.chunk(mean_and_logsd, 2, dim=1)
             pz = Gaussian_Diag(mean, logsd)
             z = pz.sample(eps) if x is None else x
             logpz -= pz.logp(z)
             return z, logdet, logpz
 
+
 # Distributions
 
+
 def Standard_Gaussian(shape):
-    mean, logsd = [torch.cuda.FloatTensor(shape).fill_(0.) for _ in range(2)]
+    mean, logsd = [torch.cuda.FloatTensor(shape).fill_(0.0) for _ in range(2)]
     return Gaussian_Diag(mean, logsd)
 
-def Gaussian_Diag(mean, logsd):
 
+def Gaussian_Diag(mean, logsd):
     class o(object):
         log2pi = float(np.log(2 * np.pi))
         pass
 
         @staticmethod
         def log_like_i(x):
-            return -0.5 * (o.log2pi + 2. * logsd + ((x - mean) ** 2) /
-                           torch.exp(2. * logsd))
+            return -0.5 * (
+                o.log2pi + 2.0 * logsd + ((x - mean) ** 2) / torch.exp(2.0 * logsd)
+            )
 
         @staticmethod
         def sample(eps):

@@ -17,20 +17,20 @@ torch.backends.cudnn.benchmark = False
 
 class ActNorm(nn.Module):
     """
-        Activation Normalization layer which normalizes the activation 
-        values of a batch by their mean and variance. The activations of 
-        each channel then should have zero mean and unit variance. This 
-        layer ensure more stable parameter updates during training as it reduces the variance over the samples in a mini batch.
-        from: https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
-        """
+    Activation Normalization layer which normalizes the activation
+    values of a batch by their mean and variance. The activations of
+    each channel then should have zero mean and unit variance. This
+    layer ensure more stable parameter updates during training as it reduces the variance over the samples in a mini batch.
+    from: https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
+    """
 
-    def __init__(self, num_features, logscale_factor=1., scale=1.):
+    def __init__(self, num_features, logscale_factor=1.0, scale=1.0):
         super(ActNorm, self).__init__()
         self.initialized = False
         self.logscale_factor = logscale_factor
         self.scale = scale
-        self.register_parameter('b', nn.Parameter(torch.zeros(1, num_features, 1)))
-        self.register_parameter('logs', nn.Parameter(torch.zeros(1, num_features, 1)))
+        self.register_parameter("b", nn.Parameter(torch.zeros(1, num_features, 1)))
+        self.register_parameter("logs", nn.Parameter(torch.zeros(1, num_features, 1)))
 
     def forward(self, input, logdet, reverse=False):
 
@@ -46,8 +46,13 @@ class ActNorm(nn.Module):
                 # Compute the mean and variance
                 sum_size = input.size(0) * input.size(-1)
                 b = -torch.sum(input, dim=(0, -1)) / sum_size
-                vars = unsqueeze(torch.sum((input + unsqueeze(b)) ** 2, dim=(0, -1)) / sum_size)
-                logs = torch.log(self.scale / (torch.sqrt(vars) + 1e-6)) / self.logscale_factor
+                vars = unsqueeze(
+                    torch.sum((input + unsqueeze(b)) ** 2, dim=(0, -1)) / sum_size
+                )
+                logs = (
+                    torch.log(self.scale / (torch.sqrt(vars) + 1e-6))
+                    / self.logscale_factor
+                )
 
                 self.b.data.copy_(unsqueeze(b).data)
                 self.logs.data.copy_(logs.data)
@@ -60,7 +65,7 @@ class ActNorm(nn.Module):
             return output.view(input_shape), logdet + dlogdet
 
         elif reverse == True:
-            #assert self.initialized
+            # assert self.initialized
             input_shape = input.size()
             input = input.view(input_shape[0], input_shape[1], -1)
             logs = self.logs * self.logscale_factor
@@ -81,7 +86,7 @@ class Invert1x1Conv(nn.Conv2d):
     def reset_parameters(self):
         # initialization done with rotation matrix
         w_init = np.linalg.qr(np.random.randn(self.num_channels, self.num_channels))[0]
-        w_init = torch.from_numpy(w_init.astype('float32'))
+        w_init = torch.from_numpy(w_init.astype("float32"))
         w_init = w_init.unsqueeze(-1).unsqueeze(-1)
         self.weight.data.copy_(w_init)
 
@@ -92,15 +97,29 @@ class Invert1x1Conv(nn.Conv2d):
             dlogdet = torch.slogdet(self.weight.squeeze())[1] * height * width
             logdet += dlogdet
             output = F.conv2d(
-                x, self.weight, self.bias, self.stride, self.padding,
-                self.dilation, self.groups)
+                x,
+                self.weight,
+                self.bias,
+                self.stride,
+                self.padding,
+                self.dilation,
+                self.groups,
+            )
         else:
             dlogdet = torch.slogdet(self.weight.squeeze())[1] * height * width
             logdet -= dlogdet
-            weight_inv = torch.inverse(self.weight.squeeze()).unsqueeze(-1).unsqueeze(-1)
+            weight_inv = (
+                torch.inverse(self.weight.squeeze()).unsqueeze(-1).unsqueeze(-1)
+            )
             output = F.conv2d(
-                x, weight_inv, self.bias, self.stride, self.padding,
-                self.dilation, self.groups)
+                x,
+                weight_inv,
+                self.bias,
+                self.stride,
+                self.padding,
+                self.dilation,
+                self.groups,
+            )
 
         self.init = True
         return output, logdet
@@ -118,8 +137,8 @@ class Shuffle(nn.Module):
 
         indices = torch.from_numpy(indices).long()
         rev_indices = torch.from_numpy(rev_indices).long()
-        self.register_buffer('indices', indices)
-        self.register_buffer('rev_indices', rev_indices)
+        self.register_buffer("indices", indices)
+        self.register_buffer("rev_indices", rev_indices)
         # self.indices, self.rev_indices = indices.cuda(), rev_indices.cuda()
 
     def forward(self, x, logdet, reverse=False):
@@ -132,7 +151,9 @@ class Shuffle(nn.Module):
 class Squeeze(nn.Module):
     def __init__(self, factor=2):
         super(Squeeze, self).__init__()
-        assert factor > 1 and isinstance(factor, int), 'no point of using this if factor <= 1'
+        assert factor > 1 and isinstance(
+            factor, int
+        ), "no point of using this if factor <= 1"
         self.factor = factor
 
     def squeeze_bchw(self, x):
@@ -142,7 +163,9 @@ class Squeeze(nn.Module):
         # taken from https://github.com/chaiyujin/glow-pytorch/blob/master/glow/modules.py
         x = x.view(bs, c, h // self.factor, self.factor, w // self.factor, self.factor)
         x = x.permute(0, 1, 3, 5, 2, 4).contiguous()
-        x = x.view(bs, c * self.factor * self.factor, h // self.factor, w // self.factor)
+        x = x.view(
+            bs, c * self.factor * self.factor, h // self.factor, w // self.factor
+        )
 
         return x
 
@@ -166,13 +189,19 @@ class Squeeze(nn.Module):
 
 
 class conv2d_actnorm(nn.Conv2d):
-    def __init__(self, channels_in, channels_out, filter_size,
-                 stride=1, padding=None):
-        super().__init__(channels_in, channels_out, filter_size,
-                         stride=stride, padding=padding)
+    def __init__(self, channels_in, channels_out, filter_size, stride=1, padding=None):
+        super().__init__(
+            channels_in, channels_out, filter_size, stride=stride, padding=padding
+        )
         padding = (filter_size - 1) // 2 or padding
-        self.conv = nn.Conv2d(channels_in, channels_out, filter_size,
-                              stride=stride, padding=padding, bias=False)
+        self.conv = nn.Conv2d(
+            channels_in,
+            channels_out,
+            filter_size,
+            stride=stride,
+            padding=padding,
+            bias=False,
+        )
         self.actnorm = ActNorm(channels_out)
 
     def forward(self, x):
@@ -182,12 +211,19 @@ class conv2d_actnorm(nn.Conv2d):
 
 
 class conv2d_zeros(nn.Conv2d):
-    def __init__(self, channels_in, channels_out, filter_size=3, stride=1,padding=0, logscale=3.):
-        super().__init__(channels_in, channels_out, filter_size,
-                         stride=stride, padding=padding)
-        self.register_parameter("logs",
-                                nn.Parameter(torch.zeros(channels_out,
-                                                         1, 1)))
+    def __init__(
+        self,
+        channels_in,
+        channels_out,
+        filter_size=3,
+        stride=1,
+        padding=0,
+        logscale=3.0,
+    ):
+        super().__init__(
+            channels_in, channels_out, filter_size, stride=stride, padding=padding
+        )
+        self.register_parameter("logs", nn.Parameter(torch.zeros(channels_out, 1, 1)))
         self.logscale_factor = logscale
 
     def reset_parameters(self):
@@ -200,8 +236,17 @@ class conv2d_zeros(nn.Conv2d):
 
 
 class Net(nn.Module):
-    def __init__(self, level, s, in_channels, input_shape,
-                 cond_channels, noscale, noscaletest, intermediate_size=512):
+    def __init__(
+        self,
+        level,
+        s,
+        in_channels,
+        input_shape,
+        cond_channels,
+        noscale,
+        noscaletest,
+        intermediate_size=512,
+    ):
         super().__init__()
 
         self.squeezer = Squeeze()
@@ -212,12 +257,13 @@ class Net(nn.Module):
         d = 2 if noscale else 1
 
         self.Net = nn.Sequential(
-            nn.Conv2d(in_channels // 2 + self.cond_channels,
-                      intermediate_size, 3, padding=1),
+            nn.Conv2d(
+                in_channels // 2 + self.cond_channels, intermediate_size, 3, padding=1
+            ),
             nn.ReLU(),
             nn.Conv2d(intermediate_size, intermediate_size, kernel_size=1),
             nn.ReLU(),
-            conv2d_zeros(intermediate_size, in_channels // d, padding=1)
+            conv2d_zeros(intermediate_size, in_channels // d, padding=1),
         )
 
         self.Net[0].bias.data.zero_()
@@ -231,39 +277,47 @@ class Net(nn.Module):
 
 
 class ConditionalCoupling(nn.Module):
-
-    def __init__(self, level, s, in_channels, input_shape,
-                 cond_channels, filter_size, noscale, noscaletest):
+    def __init__(
+        self,
+        level,
+        s,
+        in_channels,
+        input_shape,
+        cond_channels,
+        filter_size,
+        noscale,
+        noscaletest,
+    ):
         super().__init__()
-        self.Net = Net(level, s, in_channels, input_shape,
-                        cond_channels, noscale, filter_size)
+        self.Net = Net(
+            level, s, in_channels, input_shape, cond_channels, noscale, filter_size
+        )
         self.noscale = noscale
         self.noscaletest = noscaletest
 
-    def forward(self, z, lr_feat_map=None, logdet=0,
-                logpz=0, reverse=False):
+    def forward(self, z, lr_feat_map=None, logdet=0, logpz=0, reverse=False):
 
         z1, z2 = utils.split(z)
         h = self.Net(z1, lr_feat_map)
 
         if self.noscale:
-            print('Scale disabled')
+            print("Scale disabled")
             t, scale = h, torch.ones_like(h)
         else:
-            print('Scale enabled')
+            print("Scale enabled")
             t, h_scale = utils.cross(h)
             scale = torch.nn.functional.softplus(h_scale)
             logscale = torch.log(scale)
 
             if self.noscaletest:
-                print('Scale disabled for sampling')
+                print("Scale disabled for sampling")
                 scale = torch.ones_like(scale)
 
         # add if testnocsale then t, scale = h, torch.ones_like(h)
         if not reverse:
-                y2 = (z2 * scale) + t
-                y1 = z1
-                logdet += 0 if self.noscale else utils.flatten_sum(logscale)
+            y2 = (z2 * scale) + t
+            y1 = z1
+            logdet += 0 if self.noscale else utils.flatten_sum(logscale)
 
         else:
             y2 = (z2 - t) / scale
@@ -275,8 +329,7 @@ class ConditionalCoupling(nn.Module):
 
 
 class GaussianPrior(nn.Module):
-    def __init__(self, C, s, cond_channels,
-                 flow_var_shape, final=False):
+    def __init__(self, C, s, cond_channels, flow_var_shape, final=False):
         super(GaussianPrior, self).__init__()
         self.flow_var_shape = flow_var_shape
         self.cond_channels = cond_channels
@@ -301,7 +354,9 @@ class GaussianPrior(nn.Module):
         mean, sigma = h[:, 0::2], nn.functional.softplus(h[:, 1::2])
         return mean, sigma
 
-    def forward(self, x, lr_feat_map, eps, reverse, logpz=0, logdet=0,use_stored=False):
+    def forward(
+        self, x, lr_feat_map, eps, reverse, logpz=0, logdet=0, use_stored=False
+    ):
 
         if not reverse:
             if not self.final:

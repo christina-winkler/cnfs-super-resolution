@@ -6,11 +6,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 def make_layer(block, n_layers):
     layers = []
     for _ in range(n_layers):
         layers.append(block())
     return nn.Sequential(*layers)
+
 
 class ResidualDenseBlock_5C(nn.Module):
     def __init__(self, nf=64, gc=32, bias=True):
@@ -36,7 +38,7 @@ class ResidualDenseBlock_5C(nn.Module):
 
 
 class RRDB(nn.Module):
-    '''Residual in Residual Dense Block'''
+    """Residual in Residual Dense Block"""
 
     def __init__(self, nf, gc=32):
         super(RRDB, self).__init__()
@@ -55,11 +57,11 @@ class RRDBNet(nn.Module):
     def __init__(self, in_nc, cond_channels, nb, s, input_shape, gc=32):
         super(RRDBNet, self).__init__()
         RRDB_block_f = functools.partial(RRDB, nf=cond_channels, gc=gc)
-        (c,w,h) = input_shape
+        (c, w, h) = input_shape
         self.conv_first = nn.Conv2d(in_nc, cond_channels, 3, 1, 1, bias=True)
         self.RRDB_trunk = make_layer(RRDB_block_f, nb)
         self.trunk_conv = nn.Conv2d(cond_channels, cond_channels, 3, 1, 1, bias=True)
-        self.s = s 
+        self.s = s
         self.cond_channels = cond_channels
 
         #### upsampling
@@ -75,8 +77,10 @@ class RRDBNet(nn.Module):
         trunk = self.trunk_conv(self.RRDB_trunk(fea))
         fea = fea + trunk
 
-        fea = self.lrelu(self.upconv1(F.interpolate(fea, scale_factor=self.s, mode='nearest')))
-        #fea = self.lrelu(self.upconv2(F.interpolate(fea, scale_factor=self.s, mode='nearest')))
+        fea = self.lrelu(
+            self.upconv1(F.interpolate(fea, scale_factor=self.s, mode="nearest"))
+        )
+        # fea = self.lrelu(self.upconv2(F.interpolate(fea, scale_factor=self.s, mode='nearest')))
         out = self.conv_last(self.lrelu(self.HRconv(fea)))
 
         return fea

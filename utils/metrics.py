@@ -3,6 +3,7 @@ from metrics_esrgan import calculate_ssim, calculate_psnr, bgr2ycbcr
 import torchvision
 import numpy as np
 
+
 def ssim(im1, im2, orig_shape):
     """
     Computes the similarity index between two images measuring
@@ -32,9 +33,9 @@ def ssim(im1, im2, orig_shape):
     ssim = []
     # Compute ssim over samples in mini-batch
     for i in range(im1.shape[0]):
-        ssim.append(calculate_ssim(im1[i, :, :, :] * 255,
-                    im2[i, :, :, :] * 255))
+        ssim.append(calculate_ssim(im1[i, :, :, :] * 255, im2[i, :, :, :] * 255))
     return np.mean(ssim)
+
 
 def psnr(im1, im2, orig_shape):
     """
@@ -53,9 +54,9 @@ def psnr(im1, im2, orig_shape):
     psnr = []
     # Compute ssim over samples in mini-batch
     for i in range(im1.shape[0]):
-        psnr.append(calculate_psnr(im1[i, :, :, :] * 255,
-                    im2[i, :, :, :] * 255))
+        psnr.append(calculate_psnr(im1[i, :, :, :] * 255, im2[i, :, :, :] * 255))
     return np.mean(psnr)
+
 
 def nrmse(im1, im2):
     """

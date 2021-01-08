@@ -6,11 +6,12 @@ import torchvision
 import numpy as np
 import metrics
 
+
 def test_model(model, test_loader, args):
 
-    print('Metric evaluation on {}...'.format(args.testset))
+    print("Metric evaluation on {}...".format(args.testset))
 
-    savedir = 'runs/{}/snapshots/test_images/{}/'.format(args.                  exp_name, args.testset)
+    savedir = "runs/{}/snapshots/test_images/{}/".format(args.exp_name, args.testset)
 
     # storing metrics
     ssim_sample = []
@@ -37,8 +38,8 @@ def test_model(model, test_loader, args):
             w, h = orig_shape
 
             # Push tensors to GPU
-            y = y.to('cuda')
-            x = x.to('cuda')
+            y = y.to("cuda")
+            x = x.to("cuda")
 
             # plt.figure(figsize=(6, 6))
             # plt.imshow(x[0, :, :, :].permute(1, 2, 0).contiguous().detach().cpu().numpy())
@@ -54,7 +55,7 @@ def test_model(model, test_loader, args):
             # plt.savefig('y_{}.png'.format(idx))
             # plt.close()
 
-            if args.modeltype == 'flow':
+            if args.modeltype == "flow":
 
                 mu0 = model._sample(x=x, eps=0)
                 mu05 = model._sample(x=x, eps=0.5)
@@ -79,28 +80,56 @@ def test_model(model, test_loader, args):
                     os.makedirs(savedir, exist_ok=True)
                     w, h = orig_shape
                     torchvision.utils.save_image(
-                        x, savedir + '{}_x.png'.format(idx),
-                        nrow=1, padding=2, normalize=False)
+                        x,
+                        savedir + "{}_x.png".format(idx),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        y[:, :, :h, :w], savedir + '{}_y.png'.format(idx),
-                        nrow=1, padding=2, normalize=False)
+                        y[:, :, :h, :w],
+                        savedir + "{}_y.png".format(idx),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        mu0[:, :, :h, :w], savedir + '{}_eps{}.png'.format(idx, 0),
-                        nrow=1, padding=2, normalize=False)
+                        mu0[:, :, :h, :w],
+                        savedir + "{}_eps{}.png".format(idx, 0),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        mu05[:, :, :h, :w], savedir + '{}_eps{}.png'.format(idx, 0.5),
-                        nrow=1, padding=2, normalize=False)
+                        mu05[:, :, :h, :w],
+                        savedir + "{}_eps{}.png".format(idx, 0.5),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        mu07[:, :, :h, :w], savedir + '{}_eps{}.png'.format(idx, 0.7),
-                        nrow=1, padding=2, normalize=False)
+                        mu07[:, :, :h, :w],
+                        savedir + "{}_eps{}.png".format(idx, 0.7),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        mu08[:, :, :h, :w], savedir + '{}_eps{}.png'.format(idx, 0.8),
-                        nrow=1, padding=2, normalize=False)
+                        mu08[:, :, :h, :w],
+                        savedir + "{}_eps{}.png".format(idx, 0.8),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        mu1[:, :, :h, :w], savedir + '{}_eps{}.png'.format(idx, 1),
-                        nrow=1, padding=2, normalize=False)
+                        mu1[:, :, :h, :w],
+                        savedir + "{}_eps{}.png".format(idx, 1),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
 
-            elif args.modeltype == 'dlogistic':
+            elif args.modeltype == "dlogistic":
 
                 # sample from model
                 sample, means = model._sample(x=x)
@@ -113,34 +142,58 @@ def test_model(model, test_loader, args):
                 if args.visual:
                     # only for testing, delete snippet later
                     torchvision.utils.save_image(
-                        x[:, :, :h, :w], '{}_x.png'.format(idx),
-                        nrow=1, padding=2, normalize=False)
+                        x[:, :, :h, :w],
+                        "{}_x.png".format(idx),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        y[:, :, :h, :w], '{}_y.png'.format(idx),
-                        nrow=1, padding=2, normalize=False)
+                        y[:, :, :h, :w],
+                        "{}_y.png".format(idx),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        means[:, :, :h, :w], '{}_mu.png'.format(idx),
-                        nrow=1, padding=2, normalize=False)
+                        means[:, :, :h, :w],
+                        "{}_mu.png".format(idx),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
                     torchvision.utils.save_image(
-                        sample[:, :, :h, :w], '{}_sample.png'.format(idx),
-                        nrow=1, padding=2, normalize=False)
+                        sample[:, :, :h, :w],
+                        "{}_sample.png".format(idx),
+                        nrow=1,
+                        padding=2,
+                        normalize=False,
+                    )
         # store metrics
-        file = open("runs/{}/metric_eval_{}_{}.txt".format(
-                     args.exp_name, args.testset, args.modelname), "w")
+        file = open(
+            "runs/{}/metric_eval_{}_{}.txt".format(
+                args.exp_name, args.testset, args.modelname
+            ),
+            "w",
+        )
 
-        file.write('ssim mu: {} \n'.format(np.mean(ssim_0)))
-        #file.write('ssim sample (dlog): {} \n'.format(np.mean(ssim_sample)))
-        file.write('ssim mu+05:{} \n'.format(np.mean(ssim_05)))
-        file.write('ssim mu+07:{} \n'.format(np.mean(ssim_07)))
-        file.write('ssim mu+08:{} \n'.format(np.mean(ssim_08)))
-        file.write('ssim mu+1:{} \n'.format(np.mean(ssim_1)))
+        file.write("ssim mu: {} \n".format(np.mean(ssim_0)))
+        # file.write('ssim sample (dlog): {} \n'.format(np.mean(ssim_sample)))
+        file.write("ssim mu+05:{} \n".format(np.mean(ssim_05)))
+        file.write("ssim mu+07:{} \n".format(np.mean(ssim_07)))
+        file.write("ssim mu+08:{} \n".format(np.mean(ssim_08)))
+        file.write("ssim mu+1:{} \n".format(np.mean(ssim_1)))
 
-        file.write('psnr mu: {} \n'.format(np.mean(psnr_0)))
-        #file.write('psnr sample (dlog): {} \n'.format(np.mean(psnr_sample)))
-        file.write('psnr mu+05: {} \n'.format(np.mean(psnr_05)))
-        file.write('psnr mu+07:{} \n'.format(np.mean(psnr_07)))
-        file.write('psnr mu+08: {} \n'.format(np.mean(psnr_08)))
-        file.write('psnr mu+1: {} \n'.format(np.mean(psnr_1)))
+        file.write("psnr mu: {} \n".format(np.mean(psnr_0)))
+        # file.write('psnr sample (dlog): {} \n'.format(np.mean(psnr_sample)))
+        file.write("psnr mu+05: {} \n".format(np.mean(psnr_05)))
+        file.write("psnr mu+07:{} \n".format(np.mean(psnr_07)))
+        file.write("psnr mu+08: {} \n".format(np.mean(psnr_08)))
+        file.write("psnr mu+1: {} \n".format(np.mean(psnr_1)))
         file.close()
 
-        print('Done testing {} model {} on {} !'.format(args.modeltype, args.modelname, args.testset))
+        print(
+            "Done testing {} model {} on {} !".format(
+                args.modeltype, args.modelname, args.testset
+            )
+        )
