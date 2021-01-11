@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import modules
 import random
 
-import RRDBNet_arch as arch
+from models.transformations import modules
+from models.architectures import RRDBNet_arch as arch
 
 random.seed(0)
 torch.manual_seed(0)

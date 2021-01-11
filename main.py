@@ -1,10 +1,9 @@
 import argparse
 import torch
 import torch.optim as optim
-from tensorboardX import SummaryWriter
 
 # Dataset loading
-import load_data
+from utils import load_data
 
 # Utils
 import utils
@@ -12,16 +11,17 @@ import random
 import numpy as np
 
 # Models
-import condNF
-import dlogistic
+from models.architectures import condNF
+from models.architectures import dlogistic_nn
 
-# Trainer
-import trainer
-import trainer_baseline
+# Optimization
+from optimization import trainer
+from optimization import trainer_baseline
 import evaluate
 import test
 
-########################################################################################################################
+from tensorboardX import SummaryWriter
+###############################################################################
 
 
 def main(args):
@@ -33,7 +33,7 @@ def main(args):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # Initialize device which to run the model on
+    # Initialize device on which to run the model
     if torch.cuda.is_available():
         device = torch.device("cuda")
         args.num_gpus = torch.cuda.device_count()
@@ -56,6 +56,8 @@ def main(args):
             train_loader, valid_loader, args = load_data.load_train(args)
             test_loader, args = load_data.load_test(args)
 
+    quit()
+
     # Create model
     print("Creating model..")
     if args.modeltype == "flow":
@@ -76,8 +78,8 @@ def main(args):
     # params_flow = sum(x.numel() for x in model.parameters() if x.requires_grad)
     # print('Flow:   ', params_flow)
 
-    if args.modeltype == "dlogistic":
-        model = dlogistic.DLogistic_NN(
+    if args.modeltype == "dlogistic_nn":
+        model = dlogistic_nn.DLogistic_NN(
             args.condch,
             (3, args.crop_size, args.crop_size),
             args.s,
@@ -135,7 +137,7 @@ def main(args):
 
         if args.modeltype == "dlogistic":
             print("Loading trained dlogistic ...")
-            model = dlogistic.DLogistic_NN(
+            model = dlogistic_nn.DLogistic_NN(
                 args.condch,
                 (3, args.crop_size, args.crop_size),
                 args.s,
@@ -188,102 +190,67 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--visual", action="store_true", help="Visualizing the samples at test time"
-    )
-    parser.add_argument(
-        "--nbits", type=int, default=8, help="Images converted to n-bit representations"
-    )
-    parser.add_argument(
-        "--noscale", action="store_true", help="Disable scale in coupling layers"
-    )
-    parser.add_argument(
-        "--noscaletest",
-        action="store_true",
-        help="Disable scale in coupling layers at test time",
-    )
-    parser.add_argument(
-        "--model", type=str, default="condNF", help="Model you want to train."
-    )
-    parser.add_argument("--s", type=int, default=2, help="Upscaling factor.")
-    parser.add_argument(
-        "--crop_size",
-        type=int,
-        default=500,
-        help="Crop size when random cropping is applied.",
-    )
-    parser.add_argument(
-        "--patch_size", type=int, default=500, help="Training patch size."
-    )
-    parser.add_argument(
-        "--epochs", type=int, default=10000000000, help="number of epochs"
-    )
-    parser.add_argument(
-        "--max_steps", type=int, default=200000, help="For training on a large dataset."
-    )
-    parser.add_argument("--bsz", type=int, default=128, help="batch size")
-    parser.add_argument("--lr", type=float, default=0.0002, help="learning rate")
-    parser.add_argument(
-        "--filter_size",
-        type=int,
-        default=512,
-        help="filter size NN in Affine Coupling Layer",
-    )
-    parser.add_argument("--L", type=int, default=2, help="# of levels")
-    parser.add_argument("--K", type=int, default=8, help="# of flow steps, model depth")
-    parser.add_argument(
-        "--nb", type=int, default=16, help="# of residual-in-residual blocks LR NW."
-    )
-    parser.add_argument(
-        "--condch",
-        type=int,
-        default=128,
-        help="# of residual-in-residual blocks in LR network.",
-    )
+    # train configs
+    parser.add_argument("--model", type=str, default="condNF",
+                        help="Model you want to train.")
+    parser.add_argument("--modeltype", type=str, default="flow",
+                        help="Specify modeltype you would like to train.")
+    parser.add_argument("--model_path", type=str, default="runs/",
+                        help="Directory where models are saved.")
+    parser.add_argument("--modelname", type=str, default=None,
+                        help="Sepcify modelname to be tested.")
+    parser.add_argument("--epochs", type=int, default=10000,
+                        help="number of epochs")
+    parser.add_argument("--max_steps", type=int, default=20000,
+                        help="For training on a large dataset.")
+    parser.add_argument("--log_interval", type=int, default=800,
+                        help="Interval in which results should be logged.")
 
-    parser.add_argument(
-        "--datadir", type=str, default="../data", help="Dataset to train the model on."
-    )
-    parser.add_argument(
-        "--trainset",
-        type=str,
-        default="imagenet32",
-        help="Dataset to train the model on.",
-    )
-    parser.add_argument(
-        "--testset", type=str, default="set5", help="Specify test dataset"
-    )
-    parser.add_argument(
-        "--modeltype",
-        type=str,
-        default="flow",
-        help="Specify model typ you would like to train.",
-    )
-    parser.add_argument(
-        "--model_path",
-        type=str,
-        default="runs/",
-        help="Directory where models are saved.",
-    )
-    parser.add_argument(
-        "--modelname", type=str, default=None, help="Sepcify modelname to be tested."
-    )
-    parser.add_argument("--test", action="store_true", help="Model run on test set.")
-    parser.add_argument(
-        "--train", action="store_true", help="If model should be trained."
-    )
-    parser.add_argument(
-        "--exp_name", type=str, default="default", help="Name of the experiment."
-    )
-    parser.add_argument(
-        "--resume_training", action="store_true", help="If training should be resumed."
-    )
-    parser.add_argument(
-        "--log_interval",
-        type=int,
-        default=800,
-        help="Interval in which results should be logged.",
-    )
+    # runtime configs
+    parser.add_argument("--visual", action="store_true",
+                        help="Visualizing the samples at test time.")
+    parser.add_argument("--noscaletest", action="store_true",
+                        help="Disable scale in coupling layers only at test time.")
+    parser.add_argument("--noscale", action="store_true",
+                        help="Disable scale in coupling layers.")
+    parser.add_argument("--test", action="store_true",
+                        help="Model run on test set.")
+    parser.add_argument("--train", action="store_true",
+                        help="If model should be trained.")
+    parser.add_argument("--resume_training", action="store_true",
+                        help="If training should be resumed.")
+
+    # hyperparameters
+    parser.add_argument("--nbits", type=int, default=8,
+                        help="Images converted to n-bit representations.")
+    parser.add_argument("--s", type=int, default=2, help="Upscaling factor.")
+    parser.add_argument("--crop_size", type=int, default=500,
+                        help="Crop size when random cropping is applied.")
+    parser.add_argument("--patch_size", type=int, default=500,
+                        help="Training patch size.")
+    parser.add_argument("--bsz", type=int, default=128, help="batch size")
+    parser.add_argument("--lr", type=float, default=0.0002,
+                        help="learning rate")
+    parser.add_argument("--filter_size", type=int, default=512,
+                        help="filter size NN in Affine Coupling Layer")
+    parser.add_argument("--L", type=int, default=2, help="# of levels")
+    parser.add_argument("--K", type=int, default=8,
+                        help="# of flow steps, i.e. model depth")
+    parser.add_argument("--nb", type=int, default=16,
+                        help="# of residual-in-residual blocks LR network.")
+    parser.add_argument("--condch", type=int, default=128,
+                        help="# of residual-in-residual blocks in LR network.")
+
+    # data
+    parser.add_argument("--datadir", type=str, default="../data",
+                        help="Dataset to train the model on.")
+    parser.add_argument("--trainset", type=str, default="cifar10",
+                        help="Dataset to train the model on.")
+    parser.add_argument("--testset", type=str, default="set5",
+                        help="Specify test dataset")
+    # experiments
+    parser.add_argument("--exp_name", type=str, default="default",
+                        help="Name of the experiment.")
 
     args = parser.parse_args()
     main(args)

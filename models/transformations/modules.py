@@ -5,7 +5,7 @@ import torch
 import utils
 import random
 
-from distributions import Gaussian_Diag
+from ..distributions.distributions import Gaussian_Diag
 
 random.seed(0)
 torch.manual_seed(0)

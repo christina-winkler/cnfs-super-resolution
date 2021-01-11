@@ -1,12 +1,12 @@
-from distributions import DiscLogistic
-
-from condNF import LrNet
 import torch.nn as nn
+
+from ..distributions.distributions import DiscLogistic
+from models.architectures.condNF import LrNet
 
 
 class DLogistic_NN(nn.Module):
     """
-    NN Module to estimate parmaters of DLogistic.
+    NN Module to estimate parmaters of dsicretized logistic distribution.
     """
 
     def __init__(

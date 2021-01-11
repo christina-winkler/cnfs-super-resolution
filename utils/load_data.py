@@ -2,7 +2,7 @@ from os.path import exists, join
 from os import listdir
 import torch.utils.data as data_utils
 from torch.utils.data import Dataset
-import imresize_bicubic
+from utils import imresize_bicubic
 from torchvision import transforms
 import torch.nn.functional as F
 from PIL import Image
@@ -12,6 +12,7 @@ import torch
 import random
 import cv2
 import os
+
 
 # data utils
 def move_file(new_path_to_file, file_to_move):
@@ -533,7 +534,10 @@ def load_set14(args):
 
 def load_train(args):
 
-    if args.trainset == "imagenet32":
+    if args.trainset == "cifar10":
+        return load_div2k(args)
+
+    elif args.trainset == "imagenet32":
         return load_imagenet32(args)
 
     elif args.trainset == "imagenet64":
@@ -544,6 +548,9 @@ def load_train(args):
 
     elif args.trainset == "div2k":
         return load_div2k(args)
+
+    else:
+        raise ValueError("Dataset not available. Check for typos!")
 
 
 def load_test(args):
