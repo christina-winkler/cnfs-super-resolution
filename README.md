@@ -5,4 +5,4 @@ project. Part of this work can be found in the pre-print:
 [Likelihood Learning with Conditional Normalizing Flows](https://arxiv.org/abs/1912.00042).
 
 ## ✓ Checklist
-# [ ] create requirements.txt or environment.yaml file
+[ ] create requirements.txt or environment.yaml file
