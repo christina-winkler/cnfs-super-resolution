@@ -1,4 +1,4 @@
-# Super-resolution with Normalizing Flows
+# Normalizing Flows for Super-Resolution
 
 This repository contains an improved implementation of my master thesis
 project. Part of this work can be found in the pre-print:
@@ -6,3 +6,13 @@ project. Part of this work can be found in the pre-print:
 
 ## ✓ Checklist
 [ ] create requirements.txt or environment.yaml file
+
+### Description
+
+### Training
+
+### Evaluation
+
+### Pre-trained models
+
+### Experiments
