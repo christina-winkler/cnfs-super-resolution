@@ -54,6 +54,7 @@ def main(args):
             train_loader, valid_loader, test_loader, args = load_data.load_train(args)
         else:
             train_loader, valid_loader, args = load_data.load_train(args)
+            quit()
             test_loader, args = load_data.load_test(args)
 
     quit()

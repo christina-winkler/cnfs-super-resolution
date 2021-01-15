@@ -3,7 +3,7 @@ from os import listdir
 import torch.utils.data as data_utils
 from torch.utils.data import Dataset
 from utils import imresize_bicubic
-from torchvision import transforms
+from torchvision import transforms, datasets
 import torch.nn.functional as F
 from PIL import Image
 import numpy as np
@@ -250,7 +250,36 @@ class LoadTestImages(Dataset):
         return input_, target, (w, h)
 
 
-# Training datasets
+############################# TRAINING DATA ###################################
+
+def load_cifar10(args):
+
+    print("Loading Cifar10 ...")
+
+    input_tf = PILToTensor(args.nbits)
+    target_tf = Downsample(args.s)
+
+    trainset = datasets.CIFAR10(root="./data", train=True,
+                                download=False, transform=None)
+
+    # n_val_images = 10000
+    # valid_idcs = np.arange(0, len(trainset), len(trainset) // n_val_images)
+    # train_idcs = np.setdiff1d(range(len(trainset)), valid_idcs)
+    #
+    # train = torch.utils.data.Subset(trainset, train_idcs)
+    # valid = torch.utils.data.Subset(trainset, valid_idcs)
+    testset = datasets.CIFAR10(root="./data", train=False, download=False)
+    #
+    # valid_loader = data_utils.DataLoader(valid, args.bsz, shuffle=False,
+    #                                      drop_last=True)
+    train_loader = data_utils.DataLoader(trainset, args.bsz, shuffle=False,
+                                         drop_last=True)
+    test_loader = data_utils.DataLoader(testset, args.bsz,
+                                        shuffle=False, drop_last=True)
+
+    return train_loader, test_loader, args
+
+
 def load_imagenet32(args):
 
     print("Loading ImageNet32 ...")
@@ -418,7 +447,7 @@ def load_div2k(args):
     return train_loader, valid_loader, args
 
 
-# test datasets
+################################ TEST DATA #####################################
 
 
 def load_urban100(args):
@@ -535,7 +564,7 @@ def load_set14(args):
 def load_train(args):
 
     if args.trainset == "cifar10":
-        return load_div2k(args)
+        return load_cifar10(args)
 
     elif args.trainset == "imagenet32":
         return load_imagenet32(args)

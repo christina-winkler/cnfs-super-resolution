@@ -2,17 +2,16 @@ import numpy as np
 import torch
 import random
 
-# import cv2
+import cv2
 import PIL
-
-from torchvision import transforms
-from load_data import PILToTensor, Downsample, is_test_image_file
-from os.path import exists, join
-import matplotlib.pyplot as plt
-import load_data
-import metrics
 import os
 import torchvision
+from torchvision import transforms
+
+from os.path import exists, join
+import matplotlib.pyplot as plt
+from utils.load_data import PILToTensor, Downsample, is_test_image_file
+from utils import load_data, metrics
 
 
 def evaluate(model, data_loader, exp_name, logstep, args):
