@@ -31,6 +31,7 @@ def ssim(im1, im2, orig_shape):
     im2 = im2_orig.permute(0, 3, 2, 1).contiguous().cpu().detach().numpy()
 
     ssim = []
+    
     # Compute ssim over samples in mini-batch
     for i in range(im1.shape[0]):
         ssim.append(calculate_ssim(im1[i, :, :, :] * 255, im2[i, :, :, :] * 255))

@@ -49,15 +49,7 @@ def main(args):
 
     if args.train:
         # Load data
-        if "imagenet" in args.trainset:
-            assert "imagenet" in args.testset
-            train_loader, valid_loader, test_loader, args = load_data.load_train(args)
-        else:
-            train_loader, valid_loader, args = load_data.load_train(args)
-            quit()
-            test_loader, args = load_data.load_test(args)
-
-    quit()
+        train_loader, valid_loader, test_loader, args = load_data.load_train(args)
 
     # Create model
     print("Creating model..")

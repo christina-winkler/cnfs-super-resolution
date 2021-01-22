@@ -262,22 +262,22 @@ def load_cifar10(args):
     trainset = datasets.CIFAR10(root="./data", train=True,
                                 download=False, transform=None)
 
-    # n_val_images = 10000
-    # valid_idcs = np.arange(0, len(trainset), len(trainset) // n_val_images)
-    # train_idcs = np.setdiff1d(range(len(trainset)), valid_idcs)
-    #
-    # train = torch.utils.data.Subset(trainset, train_idcs)
-    # valid = torch.utils.data.Subset(trainset, valid_idcs)
+    n_val_images = 7500
+    valid_idcs = np.arange(0, len(trainset), len(trainset) // n_val_images)
+    train_idcs = np.setdiff1d(range(len(trainset)), valid_idcs)
+
+    train = torch.utils.data.Subset(trainset, train_idcs)
+    valid = torch.utils.data.Subset(trainset, valid_idcs)
     testset = datasets.CIFAR10(root="./data", train=False, download=False)
-    #
-    # valid_loader = data_utils.DataLoader(valid, args.bsz, shuffle=False,
-    #                                      drop_last=True)
+
+    valid_loader = data_utils.DataLoader(valid, args.bsz, shuffle=False,
+                                         drop_last=True)
     train_loader = data_utils.DataLoader(trainset, args.bsz, shuffle=False,
                                          drop_last=True)
     test_loader = data_utils.DataLoader(testset, args.bsz,
                                         shuffle=False, drop_last=True)
 
-    return train_loader, test_loader, args
+    return train_loader, valid_loader, test_loader, args
 
 
 def load_imagenet32(args):
