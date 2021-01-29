@@ -15,7 +15,7 @@ from models.architectures import condNF
 from models.architectures import dlogistic_nn
 
 # Optimization
-from optimization import trainer
+from optimization.trainer import trainer
 from optimization import trainer_baseline
 import evaluate
 import test
@@ -110,7 +110,7 @@ def main(args):
             )
 
         if args.modeltype == "flow":
-            trainer.trainer(
+            trainer(
                 args, train_loader, valid_loader, test_loader, model, optimizer, device
             )
 
@@ -235,9 +235,9 @@ if __name__ == "__main__":
                         help="# of residual-in-residual blocks in LR network.")
 
     # data
-    parser.add_argument("--datadir", type=str, default="../data",
+    parser.add_argument("--datadir", type=str, default="data",
                         help="Dataset to train the model on.")
-    parser.add_argument("--trainset", type=str, default="cifar10",
+    parser.add_argument("--trainset", type=str, default="imagenet32",
                         help="Dataset to train the model on.")
     parser.add_argument("--testset", type=str, default="set5",
                         help="Specify test dataset")
