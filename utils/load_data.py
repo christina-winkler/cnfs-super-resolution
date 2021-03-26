@@ -186,76 +186,76 @@ class LoadTrainImages(Dataset):
         return input_, target
 
 
-class LoadTrainImages2(Dataset):
-    def __init__(
-        self,
-        file_dir,
-        input_transform=None,
-        target_transform=None,
-        padme=False,
-        args=None,
-    ):
-        """
-        Args:
-            imagedir (str): Path to image directory.
-            input_transform (callable, optional): Optional input transform
-            to be applied.
-            target_transform (callable, optional): Optional target
-            transform to be applied.
-        """
-        super(LoadTrainImages2, self).__init__()
-        self.padme = padme
-        self.patch_size = args.patch_size
-        self.s = args.s
-        self.image_filenames = []
-
-        fname = file_dir + 'train_data_batch_7_label.npy'
-        imgs_numpy = np.load(fname)
-        print(imgs_numpy.shape)
-        quit()
-        for file in listdir(file_dir):
-            print(file_dir)
-            quit()
-            # image_dir = join(file_dir, subdir)
-            # print(image_dir)
-            quit()
-            f_names = [
-                join(image_dir, x) for x in listdir(image_dir) if is_train_image_file(x)
-            ]
-            self.image_filenames.extend(f_names)
-            print(f_names)
-            quit()
-
-        self.input_transform = input_transform
-        self.target_transform = target_transform
-
-    def __len__(self):
-        return len(self.image_filenames)
-
-    def __getitem__(self, idx):
-        input_ = Image.open(self.image_filenames[idx])
-        target = input_.copy()
-
-        if (input_.mode) != "RGB":
-            raise ValueError
-
-        if self.input_transform and self.target_transform:
-
-            input_ = self.input_transform(input_)
-            target = self.target_transform(input_)
-
-            if self.padme:
-                # Pad the input and target to get the desired patch size
-                pad_h = self.patch_size - input_.size()[2]
-                pad_w = self.patch_size - input_.size()[2]
-                input_pad = (0, pad_w, 0, pad_h)
-                tar_pad_h = (self.patch_size // self.s) - target.size()[2]
-                tar_pad_w = (self.patch_size // self.s) - target.size()[2]
-                tar_pad = (0, tar_pad_h, 0, tar_pad_w)
-                input_ = F.pad(input_, input_pad, "constant", 0)
-                target = F.pad(target, tar_pad, "constant", 0)
-
-        return input_, target
+# class LoadTrainImages2(Dataset):
+#     def __init__(
+#         self,
+#         file_dir,
+#         input_transform=None,
+#         target_transform=None,
+#         padme=False,
+#         args=None,
+#     ):
+#         """
+#         Args:
+#             imagedir (str): Path to image directory.
+#             input_transform (callable, optional): Optional input transform
+#             to be applied.
+#             target_transform (callable, optional): Optional target
+#             transform to be applied.
+#         """
+#         super(LoadTrainImages2, self).__init__()
+#         self.padme = padme
+#         self.patch_size = args.patch_size
+#         self.s = args.s
+#         self.image_filenames = []
+#
+#         fname = file_dir + 'train_data_batch_7_label.npy'
+#         imgs_numpy = np.load(fname)
+#         print(imgs_numpy.shape)
+#         quit()
+#         for file in listdir(file_dir):
+#             print(file_dir)
+#             quit()
+#             # image_dir = join(file_dir, subdir)
+#             # print(image_dir)
+#             quit()
+#             f_names = [
+#                 join(image_dir, x) for x in listdir(image_dir) if is_train_image_file(x)
+#             ]
+#             self.image_filenames.extend(f_names)
+#             print(f_names)
+#             quit()
+#
+#         self.input_transform = input_transform
+#         self.target_transform = target_transform
+#
+#     def __len__(self):
+#         return len(self.image_filenames)
+#
+#     def __getitem__(self, idx):
+#         input_ = Image.open(self.image_filenames[idx])
+#         target = input_.copy()
+#
+#         if (input_.mode) != "RGB":
+#             raise ValueError
+#
+#         if self.input_transform and self.target_transform:
+#
+#             input_ = self.input_transform(input_)
+#             target = self.target_transform(input_)
+#
+#             if self.padme:
+#                 # Pad the input and target to get the desired patch size
+#                 pad_h = self.patch_size - input_.size()[2]
+#                 pad_w = self.patch_size - input_.size()[2]
+#                 input_pad = (0, pad_w, 0, pad_h)
+#                 tar_pad_h = (self.patch_size // self.s) - target.size()[2]
+#                 tar_pad_w = (self.patch_size // self.s) - target.size()[2]
+#                 tar_pad = (0, tar_pad_h, 0, tar_pad_w)
+#                 input_ = F.pad(input_, input_pad, "constant", 0)
+#                 target = F.pad(target, tar_pad, "constant", 0)
+#
+#         return input_, target
 
 
 class LoadTestImages(Dataset):
@@ -322,7 +322,7 @@ class LoadTestImages(Dataset):
         return input_, target, (w, h)
 
 
-############################# TRAINING DATA ###################################
+############################# TRAINING DATA ####################################
 
 def load_cifar10(args):
 
@@ -363,7 +363,7 @@ def load_imagenet32(args):
     input_tf = PILToTensor(args.nbits)
     target_tf = Downsample(args.s)
 
-    data = LoadTrainImages2(
+    data = LoadTrainImages(
         file_dir="{}/imagenet32/train_32x32/".format(args.datadir),
         input_transform=input_tf,
         target_transform=target_tf,
@@ -371,7 +371,7 @@ def load_imagenet32(args):
         padme=False,
     )
 
-    n_val_images = 10000
+    n_val_images = 8
     valid_idcs = np.arange(0, len(data), len(data) // n_val_images)
     train_idcs = np.setdiff1d(range(len(data)), valid_idcs)
 

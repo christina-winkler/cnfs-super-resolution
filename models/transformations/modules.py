@@ -2,7 +2,6 @@ import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
 import torch
-import utils
 import random
 
 from ..distributions.distributions import Gaussian_Diag
@@ -20,7 +19,8 @@ class ActNorm(nn.Module):
     Activation Normalization layer which normalizes the activation
     values of a batch by their mean and variance. The activations of
     each channel then should have zero mean and unit variance. This
-    layer ensure more stable parameter updates during training as it reduces the variance over the samples in a mini batch.
+    layer ensure more stable parameter updates during training as it reduces
+    the variance over the samples in a mini batch.
     from: https://github.com/pclucas14/pytorch-glow/blob/master/invertible_layers.py
     """
 
@@ -297,32 +297,32 @@ class ConditionalCoupling(nn.Module):
 
     def forward(self, z, lr_feat_map=None, logdet=0, logpz=0, reverse=False):
 
-        z1, z2 = utils.split(z)
+        z1, z2 = split(z)
         h = self.Net(z1, lr_feat_map)
 
         if self.noscale:
-            print("Scale disabled")
+            # print("Scale disabled")
             t, scale = h, torch.ones_like(h)
         else:
-            print("Scale enabled")
-            t, h_scale = utils.cross(h)
+            # print("Scale enabled")
+            t, h_scale = cross(h)
             scale = torch.nn.functional.softplus(h_scale)
             logscale = torch.log(scale)
 
             if self.noscaletest:
-                print("Scale disabled for sampling")
+                # print("Scale disabled for sampling")
                 scale = torch.ones_like(scale)
 
         # add if testnocsale then t, scale = h, torch.ones_like(h)
         if not reverse:
             y2 = (z2 * scale) + t
             y1 = z1
-            logdet += 0 if self.noscale else utils.flatten_sum(logscale)
+            logdet += 0 if self.noscale else flatten_sum(logscale)
 
         else:
             y2 = (z2 - t) / scale
             y1 = z1
-            logdet -= 0 if self.noscale else utils.flatten_sum(logscale)
+            logdet -= 0 if self.noscale else flatten_sum(logscale)
 
         y = torch.cat((y1, y2), 1)
         return y, logdet
@@ -382,3 +382,44 @@ class GaussianPrior(nn.Module):
                 z = self.prior.sample(mean, sigma, eps=eps)
 
         return z, logdet, logpz
+
+########################### UTILS ##############################################
+
+
+def split(feature):
+    """
+    Splits the input feature tensor into two halves along the channel dimension.
+    Channel-wise masking.
+    Args:
+        feature: Input tensor to be split.
+    Returns:
+        Two output tensors resulting from splitting the input tensor into half
+        along the channel dimension.
+    """
+    C = feature.size(1)
+    return feature[:, : C // 2, ...], feature[:, C // 2:, ...]
+
+
+def cross(feature):
+    """
+    Performs two different slicing operations along the channel dimension.
+    Args:
+        feature: PyTorch Tensor.
+    Returns:
+        feature[:, 0::2, ...]: Selects every feature with even channel dimensions index.
+        feature[:, 1::2, ...]: Selects every feature with uneven channel dimension index.
+    """
+    return feature[:, 0::2, ...], feature[:, 1::2, ...]
+
+
+def concat_feature(tensor_a, tensor_b):
+    """
+    Concatenates features along the first dimension.
+    """
+    return torch.cat((tensor_a, tensor_b), dim=1)
+
+
+def flatten_sum(logps):
+    while len(logps.size()) > 1:
+        logps = logps.sum(dim=-1)
+    return logps

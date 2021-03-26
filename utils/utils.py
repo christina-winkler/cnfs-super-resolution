@@ -1,5 +1,4 @@
 from datetime import datetime
-from collections import OrderedDict
 import numpy as np
 import random
 import torch
@@ -11,39 +10,6 @@ np.random.seed(0)
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-
-
-def split(feature):
-    """
-    Splits the input feature tensor into two halves along the channel dimension.
-    Channel-wise masking.
-    Args:
-        feature: Input tensor to be split.
-    Returns:
-        Two output tensors resulting from splitting the input tensor into half
-        along the channel dimension.
-    """
-    C = feature.size(1)
-    return feature[:, : C // 2, ...], feature[:, C // 2 :, ...]
-
-
-def cross(feature):
-    """
-    Performs two different slicing operations along the channel dimension.
-    Args:
-        feature: PyTorch Tensor.
-    Returns:
-        feature[:, 0::2, ...]: Selects every feature with even channel dimensions index.
-        feature[:, 1::2, ...]: Selects every feature with uneven channel dimension index.
-    """
-    return feature[:, 0::2, ...], feature[:, 1::2, ...]
-
-
-def concat_feature(tensor_a, tensor_b):
-    """
-    Concatenates features along the first dimension.
-    """
-    return torch.cat((tensor_a, tensor_b), dim=1)
 
 
 def load_model(model_with_config, optimizer, args, modelname=None):
@@ -214,9 +180,3 @@ def sum(tensor, dims=None, keepdim=False):
             for i, d in enumerate(dims):
                 tensor.squeeze_(d - i)
         return tensor
-
-
-def flatten_sum(logps):
-    while len(logps.size()) > 1:
-        logps = logps.sum(dim=-1)
-    return logps
