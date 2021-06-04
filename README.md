@@ -19,7 +19,7 @@ The conda environment can be installed via
 	```
 	conda env create -f environment_nfsr.yaml 
 	```
-And used by
+And used by running
 	```
 	source activate cnf-sr
 	```
