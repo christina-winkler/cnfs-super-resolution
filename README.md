@@ -1,4 +1,4 @@
-# Normalizing Flows for Super-Resolution
+# Conditional Normalizing Flows for Super-Resolution
 
 This repository contains an implementation of my master thesis
 project. 
