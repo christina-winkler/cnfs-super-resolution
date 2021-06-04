@@ -5,6 +5,21 @@ project.
 Pre-print:
 **[Likelihood Learning with Conditional Normalizing Flows](https://arxiv.org/abs/1912.00042)**.
 
+### Requirements
+
+The requirements for the conda environment in which we have tested this code are started in `environment_nfsr.yaml`.
+
+The main dependencies are 
+-   `python 3.8.3`
+-   `pytorch 1.8.0` 
+The conda environment can be installed via
+	```
+	conda env create -f environment_nfsr.yaml 
+	```
+And used by
+	```
+	source activate cnf-sr
+	```
 
 ### Cite
 
