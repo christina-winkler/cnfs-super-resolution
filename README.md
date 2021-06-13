@@ -15,11 +15,15 @@ The requirements for the conda environment in which we have tested this code are
 The main dependencies are 
 -   `python 3.8.3`
 -   `pytorch 1.8.0` 
+-   
 The conda environment can be installed via
+
 	```
 	conda env create -f environment_nfsr.yaml 
 	```
+	
 And used by running
+
 	```
 	source activate cnf-sr
 	```
