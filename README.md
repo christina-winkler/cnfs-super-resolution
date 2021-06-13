@@ -1,9 +1,7 @@
 # Conditional Normalizing Flows for Super-Resolution
 
-This repository contains an implementation of my master thesis
-project conducted at the Amsterdam Machine Learning Lab 2019. 
-
-Pytorch implementation of conditional normalizing flows applied to super-resolution. 
+This repository contains an implementation in Pytorch of conditional normalizing flows applied to super-resolution.
+This master thesis project was conducted at the Amsterdam Machine Learning Lab 2019. 
 
 ![Image](https://github.com/christina-winkler/cnfs-super-resolution/blob/master/git_cnf_compare.png?raw=true)
 
