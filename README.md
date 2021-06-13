@@ -5,7 +5,7 @@ project conducted at the Amsterdam Machine Learning Lab 2019.
 
 Pytorch implementation of conditional normalizing flows applied to super-resolution. 
 
-![Image](../blob/master/git_cnf_compare.png?raw=true)
+![Image](https://github.com/christina-winkler/cnfs-super-resolution/blob/master/git_cnf_compare.png?raw=true)
 
 Pre-print:
 **[Likelihood Learning with Conditional Normalizing Flows](https://arxiv.org/abs/1912.00042)**.
