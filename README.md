@@ -2,6 +2,8 @@
 
 This repository contains an implementation in Pytorch of conditional normalizing flows applied to super-resolution.
 This master thesis project was conducted at the Amsterdam Machine Learning Lab 2019. 
+
+
 Pre-print:
 **[Likelihood Learning with Conditional Normalizing Flows](https://arxiv.org/abs/1912.00042)**.
 
