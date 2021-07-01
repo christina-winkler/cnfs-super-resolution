@@ -7,7 +7,7 @@ This master thesis project was conducted at the Amsterdam Machine Learning Lab 2
 Pre-print:
 **[Likelihood Learning with Conditional Normalizing Flows](https://arxiv.org/abs/1912.00042)**.
 
-Results of the conditional normalizig flow model compared to a factorized likelihood baseline:
+Results of the conditional normalizing flow model compared to a factorized likelihood baseline:
 ![Image](https://github.com/christina-winkler/cnfs-super-resolution/blob/master/git_cnf_compare.png?raw=true)
 
 
