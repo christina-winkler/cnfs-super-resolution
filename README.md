@@ -33,8 +33,6 @@ And used by running
 
 ### Cite
 
-Please cite our pre-print if you use this code in your own work:
-
 ```
 @misc{winkler2019learning,
       title={Learning Likelihoods with Conditional Normalizing Flows}, 
