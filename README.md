@@ -21,15 +21,15 @@ The main dependencies are:
 
 The conda environment can be installed via
 
-	```
-	conda env create -f environment_nfsr.yaml 
-	```
+``` bash
+conda env create -f environment_nfsr.yaml 
+```
 	
 And used by running
 
-	```
-	source activate cnf-sr
-	```
+``` bash
+source activate cnf-sr
+```
 
 ### Cite
 
