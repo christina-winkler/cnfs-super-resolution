@@ -4,7 +4,7 @@ This repository contains an implementation in Pytorch of conditional normalizing
 This master thesis project was conducted at the Amsterdam Machine Learning Lab 2019. 
 
 
-Pre-print:
+This Code corresponds to the pre-print:
 **[Likelihood Learning with Conditional Normalizing Flows](https://arxiv.org/abs/1912.00042)**.
 
 Results of the conditional normalizing flow model compared to a factorized likelihood baseline:
